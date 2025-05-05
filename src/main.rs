@@ -20,6 +20,9 @@ fn main() -> Result<()> {
             let mut header = [0; 100];
             file.read_exact(&mut header)?;
 
+            // Not a very short solution but can help with new people to rust.
+            // Also requires that the first page have all the data.
+            
             // The page size is stored at the 16th byte offset, using 2 bytes in big-endian order
             #[allow(unused_variables)]
             let page_size = u16::from_be_bytes([header[16], header[17]]);
@@ -38,16 +41,9 @@ fn main() -> Result<()> {
             #[allow(unused_variables)]
             let cell_count = u16::from_be_bytes([page0_post_header[3],page0_post_header[4]]); 
             
-            
             eprintln!("{}", cell_count);
-            
-            /*
-               A value of 2 (0x02) means the page is an interior index b-tree page.
-    A value of 5 (0x05) means the page is an interior table b-tree page.
-    A value of 10 (0x0a) means the page is a leaf index b-tree page.
-    A value of 13 (0x0d) means the page is a leaf table b-tree page.
-             */
-            
+           
+          
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
