@@ -23,6 +23,7 @@ fn main() -> Result<()> {
 
     match command.as_str() {
         ".dbinfo" => {
+            eprintln!("{:?}", pz.database_page_size);
             //println!("Number of pages: {}", pz.number_of_pages);
             println!("number of tables: {}", pz.number_of_tables);
             println!("database page size: {}", pz.database_page_size);
