@@ -1,9 +1,7 @@
-pub mod util;
+mod util;
 
 use anyhow::{bail, Result};
 use std::fs::File;
-use std::io::prelude::*;
-use std::os::unix::prelude::FileExt;
 use crate::util::{parse_page_zero, PageZero};
 
 fn main() -> Result<()> {
@@ -33,7 +31,6 @@ fn main() -> Result<()> {
             eprintln!("Number of pages: {}", pz.number_of_pages);
             eprintln!("database page size: {}", pz.database_page_size);
             eprintln!("number of tables: {}", pz.number_of_tables);
-            
         }
         _ => bail!("Missing or invalid command passed: {}", command),
     }
