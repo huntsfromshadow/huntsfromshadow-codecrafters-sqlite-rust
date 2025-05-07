@@ -108,7 +108,7 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
 
                 if (col_cnt == 2) {
                     // It's a table
-                    println!("{}", ns);
+                    print!("{} ", ns);
                 }
 
                 col_cnt = col_cnt + 1;
