@@ -31,6 +31,7 @@ fn main() -> Result<()> {
             //eprintln!("Number of pages: {}", pz.number_of_pages);
             //eprintln!("database page size: {}", pz.database_page_size);
             //eprintln!("number of tables: {}", pz.number_of_tables);
+            pz.table_names.reverse();
             for i in pz.table_names {
                 print!("{} ", i);
             }
