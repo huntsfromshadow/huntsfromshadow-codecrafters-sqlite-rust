@@ -9,6 +9,7 @@ pub struct PageZero {
     pub database_page_size: u16,
     pub number_of_pages: u32,
     pub number_of_tables: u16,
+    pub table_names: Vec<String>,
 }
 
 impl PageZero {
@@ -17,6 +18,7 @@ impl PageZero {
             number_of_pages: 0,
             database_page_size: 0,
             number_of_tables: 0,
+            table_names: vec![],
         }
     }
 }
@@ -24,6 +26,7 @@ impl PageZero {
 pub struct Cell {
     pub total_bytes_payload: u64,
     pub row_id: u64,
+    
 }
 
 impl Cell {
@@ -108,7 +111,7 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
 
                 if (col_cnt == 2) {
                     // It's a table
-                    print!("{} ", ns);
+                    page_zero.table_names.push(ns.to_string());
                 }
 
                 col_cnt = col_cnt + 1;
@@ -120,14 +123,6 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
             }
         }
     }
-
-    /*r.st_schema_type = read_varint(&mut file);
-    r.st_schema_name = read_varint(&mut file);
-    r.st_table_name = read_varint(&mut file);
-    r.st_table_rootpage = read_varint(&mut file);
-    r.st_table_sql = read_varint(&mut file);*/
-
-    ////eprintln!("{:?}", r);
 }
 
 #[derive(Debug, PartialEq, Eq)]

@@ -23,14 +23,15 @@ fn main() -> Result<()> {
 
     match command.as_str() {
         ".dbinfo" => {
-            eprintln!("Number of pages: {}", pz.number_of_pages);
-            println!("database page size: {}", pz.database_page_size);
+            //println!("Number of pages: {}", pz.number_of_pages);
+            //println!("database page size: {}", pz.database_page_size);
             println!("number of tables: {}", pz.number_of_tables);
         }
         ".tables" => {
-            eprintln!("Number of pages: {}", pz.number_of_pages);
-            eprintln!("database page size: {}", pz.database_page_size);
-            eprintln!("number of tables: {}", pz.number_of_tables);
+            //eprintln!("Number of pages: {}", pz.number_of_pages);
+            //eprintln!("database page size: {}", pz.database_page_size);
+            //eprintln!("number of tables: {}", pz.number_of_tables);
+            println!("{:?}", pz.table_names);
         }
         _ => bail!("Missing or invalid command passed: {}", command),
     }
