@@ -31,7 +31,9 @@ fn main() -> Result<()> {
             //eprintln!("Number of pages: {}", pz.number_of_pages);
             //eprintln!("database page size: {}", pz.database_page_size);
             //eprintln!("number of tables: {}", pz.number_of_tables);
-            println!("{:?}", pz.table_names);
+            for i in pz.table_names {
+                print!("{} ", i);
+            }
         }
         _ => bail!("Missing or invalid command passed: {}", command),
     }
