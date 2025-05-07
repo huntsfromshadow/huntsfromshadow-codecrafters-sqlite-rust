@@ -26,7 +26,7 @@ impl PageZero {
 pub struct Cell {
     pub total_bytes_payload: u64,
     pub row_id: u64,
-    
+
 }
 
 impl Cell {
@@ -119,7 +119,8 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
                 col_cnt = col_cnt + 1;
                 // Two complements number
             } else {
-                panic!("Unknown Type: {}", cd);
+                //panic!("Unknown Type: {}", cd);
+                col_cnt = col_cnt + 1;
             }
         }
     }
