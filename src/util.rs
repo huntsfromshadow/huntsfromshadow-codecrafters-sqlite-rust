@@ -76,19 +76,19 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
         };
         let siz = read_varint(&mut file);
         r.size_record_header_len = siz.0;
-        eprintln!("{:?}", siz);
+        //eprintln!("{:?}", siz);
         let start = siz.1 as u64;
-        eprintln!("start {}", start);
+        //eprintln!("start {}", start);
 
         let mut read_bytes = siz.1 as u64;
         while (read_bytes < r.size_record_header_len) {
             // Read next varint
             let rs = read_varint(&mut file);
-            eprintln!("rbyte: {:?}, res: {:?} /", read_bytes, rs);
+            //eprintln!("rbyte: {:?}, res: {:?} /", read_bytes, rs);
             read_bytes = read_bytes + rs.1 as u64;
             r.column_data.push(rs.0);
         }
-        eprintln!("{:?}", r.column_data);
+        //eprintln!("{:?}", r.column_data);
 
         // Finally get the data from the columns
         let mut col_cnt = 0;
@@ -96,15 +96,15 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
             if (cd >= 23 && cd % 2 == 1) {
                 // Value is a string in the text encoding and (N-13)/2 bytes in length. The nul terminator is not stored.
                 let siz = (cd - 13) / 2;
-                eprintln!("siz {}", siz);
+                //eprintln!("siz {}", siz);
 
                 let mut buffer = vec![0u8; siz as usize];
-                eprintln!("{:?}", buffer);
+                //eprintln!("{:?}", buffer);
                 file.read_exact(&mut buffer).unwrap();
 
-                eprintln!("{:0x?}", buffer);
+                //eprintln!("{:0x?}", buffer);
                 let ns = std::str::from_utf8(buffer.as_slice()).unwrap();
-                eprintln!("ns {}", ns);
+                //eprintln!("ns {}", ns);
 
                 if (col_cnt == 2) {
                     // It's a table
@@ -127,7 +127,7 @@ pub fn parse_page_zero(mut file: File, page_zero: &mut PageZero) {
     r.st_table_rootpage = read_varint(&mut file);
     r.st_table_sql = read_varint(&mut file);*/
 
-    //eprintln!("{:?}", r);
+    ////eprintln!("{:?}", r);
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -208,13 +208,13 @@ pub fn decode_sqlite_varint(data: &[u8]) -> Result<(u64, usize), VarintError> {
 }
 
 /*wrk.reverse();
-eprintln!("Final Read int arr: {:?}", wrk);
+//eprintln!("Final Read int arr: {:?}", wrk);
 for i in 0..8 - wrk.len() {
     wrk.push(0);
 }
-eprintln!("Final Read int arr: {:?}", wrk);
+//eprintln!("Final Read int arr: {:?}", wrk);
 wrk.reverse();
-eprintln!("Final Read int arr: {:?}", wrk);*/
+//eprintln!("Final Read int arr: {:?}", wrk);*/
 
 pub fn calculate_u8_be(v1: u8, v2: u8) -> u16 {
     ((v1 as u16) << 8) | v2 as u16
