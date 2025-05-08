@@ -1,4 +1,5 @@
 mod util;
+mod db_file;
 
 use anyhow::{bail, Result};
 use std::fs::File;
@@ -15,6 +16,8 @@ fn main() -> Result<()> {
 
     // Parse command and act accordingly
     let command = &args[2];
+
+    // Okay we need to first get the DB Online
 
     let file = File::open(&args[1])?;
     let mut pz = PageZero::default();
