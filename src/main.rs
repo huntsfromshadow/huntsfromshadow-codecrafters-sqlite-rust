@@ -1,10 +1,10 @@
+mod db;
 mod util;
-mod db_file;
+mod sqlite_varint_processing;
 
 use anyhow::{bail, Result};
 use std::fs::File;
-use crate::db_file::DbFile;
-use crate::util::{parse_page_zero, PageZero};
+use crate::db::Db;
 
 fn main() -> Result<()> {
     // Parse arguments
@@ -18,33 +18,20 @@ fn main() -> Result<()> {
     // Parse command and act accordingly
     let command = &args[2];
 
-    // Okay we need to first get the DB Online
-    let db_file = DbFile::process_file(args[1].clone());
+    let mut db = Db::new_with_file(args[1].clone());
 
-    //let file = File::open(&args[1])?;
-    //let mut pz = PageZero::default();
-
-    
-    //parse_page_zero(file, &mut pz);
-
-    /*match command.as_str() {
+    match command.as_str() {
         ".dbinfo" => {
-            eprintln!("{:?}", pz.database_page_size);
-            //println!("Number of pages: {}", pz.number_of_pages);
-            println!("number of tables: {}", pz.number_of_tables);
-            println!("database page size: {}", pz.database_page_size);
+            let dbinfo = db.cmd_get_db_info();
+            println!("number of tables: {}", dbinfo.number_of_tables);
+            println!("database page size: {}", dbinfo.database_page_size);
         }
         ".tables" => {
-            //eprintln!("Number of pages: {}", pz.number_of_pages);
-            //eprintln!("database page size: {}", pz.database_page_size);
-            //eprintln!("number of tables: {}", pz.number_of_tables);
-            pz.table_names.reverse();
-            for i in pz.table_names {
-                print!("{} ", i);
-            }
+            let table_info = db.cmd_get_tables_info();
+           
         }
         _ => bail!("Missing or invalid command passed: {}", command),
-    }*/
+    }
 
     Ok(())
 }

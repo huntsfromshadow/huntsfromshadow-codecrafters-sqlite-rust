@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{Seek, SeekFrom};
 use byteorder::{BigEndian, ReadBytesExt};
 use crate::db_file::Instruction::SKIP;
+use crate::mem_page::MemPage;
 // Core data of just the db file itself
 // also methods to get at other data
 
@@ -45,43 +46,51 @@ pub struct DbFile {
     pub db_size_in_pages: u32,
     pub page_number_first_freelist_trunk: u32,
     pub number_freelist_pages: u32,
-    pub db_text_encoding: u32
+    pub db_text_encoding: u32,
+
+    pub db_file: File,
+    pub page_one: MemPage,
 }
 
 impl DbFile {
-    pub fn process_file(db_path: String) -> Self {
-        let mut file = File::open(db_path).expect("Could not open database file");
-
+    // Static Stuff
+    pub fn init_process_file(db_path: String) {
         let mut retval = Self {
             database_page_size: 0,
             db_size_in_pages: 0,
             page_number_first_freelist_trunk: 0,
             number_freelist_pages: 0,
             db_text_encoding: 0,
+
+            db_file: File::open(db_path).expect("Could not open database file"),
+            page_one: MemPage::new(), // Just putting something here will replace later
         };
+        retval.process_db_header();
+        retval.page_one = MemPage::new_for_page_one(&mut retval);
+    }
 
-
-        HEADER_DEF.iter().filter( | hfield: &&(i32, i32, Instruction) | {
+    fn process_db_header(&mut self) {
+        HEADER_DEF.iter().filter(|hfield: &&(i32, i32, Instruction)| {
             hfield.2 == Instruction::SAVE
         })
         .copied()
-        .for_each( | hfield: (i32, i32, Instruction) | {
-            file.seek(SeekFrom::Start(hfield.0 as u64))
-                .expect(&format!("Can't Seek for {:?}",hfield));
+        .for_each(|hfield: (i32, i32, Instruction)| {
+            self.db_file.seek(SeekFrom::Start(hfield.0 as u64))
+                .expect(&format!("Can't Seek for {:?}", hfield));
 
             let mut tmp_val: u32 = 0;
 
             // We are up converting all the values to u32, and we
             // will shrink them down to the size they need
-            match(hfield.1) {
+            match (hfield.1) {
                 2 => {
-                    let t = file.read_u8()
-                        .expect(&format!("Can't read from {:?}",hfield));
+                    let t = self.db_file.read_u8()
+                        .expect(&format!("Can't read from {:?}", hfield));
                     tmp_val = t as u32;
                 }
                 4 => {
-                    let t = file.read_u32::<BigEndian>()
-                        .expect(&format!("Can't read from {:?}",hfield));
+                    let t = self.db_file.read_u32::<BigEndian>()
+                        .expect(&format!("Can't read from {:?}", hfield));
                     tmp_val = t;
                 }
                 _ => {
@@ -89,51 +98,26 @@ impl DbFile {
                 }
             }
 
-            match(hfield.0) {
+            match (hfield.0) {
                 16 => {
-                    retval.database_page_size = tmp_val as u16;
+                    self.database_page_size = tmp_val as u16;
                 }
                 28 => {
-                    retval.db_size_in_pages = tmp_val;
+                    self.db_size_in_pages = tmp_val;
                 }
                 32 => {
-                    retval.page_number_first_freelist_trunk = tmp_val;
+                    self.page_number_first_freelist_trunk = tmp_val;
                 }
                 36 => {
-                    retval.number_freelist_pages = tmp_val;
+                    self.number_freelist_pages = tmp_val;
                 }
                 56 => {
-                    retval.db_text_encoding = tmp_val;
+                    self.db_text_encoding = tmp_val;
                 }
                 _ => {
                     panic!("Unknown data to save in the struct {:?}", hfield);
                 }
             }
         });
-
-        retval
-/*
-
-
-        page_zero.database_page_size = crate::util::read_u16(&mut file);
-
-        file.seek(SeekFrom::Start(28)).unwrap();
-        page_zero.number_of_pages = crate::util::read_u32(&mut file);
-
-        file.seek(SeekFrom::Start(103)).unwrap();
-        page_zero.number_of_tables = crate::util::read_u16(&mut file);
-
-        // Now we need the cell pointer list
-        let mut ptr_vec: Vec<u16> = Vec::with_capacity(page_zero.number_of_tables as usize);
-        file.seek(SeekFrom::Start(108)).unwrap();
-        for i in 0..page_zero.number_of_tables {
-            let ptr_val = file.read_u16::<BigEndian>().unwrap();
-            ptr_vec.push(ptr_val);
-        }
-        ptr_vec.reverse();
-
-*/
-
-
     }
 }
