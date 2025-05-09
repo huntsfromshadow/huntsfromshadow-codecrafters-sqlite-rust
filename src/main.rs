@@ -3,6 +3,7 @@ mod db_file;
 
 use anyhow::{bail, Result};
 use std::fs::File;
+use crate::db_file::DbFile;
 use crate::util::{parse_page_zero, PageZero};
 
 fn main() -> Result<()> {
@@ -18,13 +19,15 @@ fn main() -> Result<()> {
     let command = &args[2];
 
     // Okay we need to first get the DB Online
+    let db_file = DbFile::process_file(args[1].clone());
 
-    let file = File::open(&args[1])?;
-    let mut pz = PageZero::default();
+    //let file = File::open(&args[1])?;
+    //let mut pz = PageZero::default();
 
-    parse_page_zero(file, &mut pz);
+    
+    //parse_page_zero(file, &mut pz);
 
-    match command.as_str() {
+    /*match command.as_str() {
         ".dbinfo" => {
             eprintln!("{:?}", pz.database_page_size);
             //println!("Number of pages: {}", pz.number_of_pages);
@@ -41,7 +44,7 @@ fn main() -> Result<()> {
             }
         }
         _ => bail!("Missing or invalid command passed: {}", command),
-    }
+    }*/
 
     Ok(())
 }
