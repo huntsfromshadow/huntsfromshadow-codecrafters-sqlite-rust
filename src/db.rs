@@ -54,8 +54,6 @@ impl Db {
         let mut df = &mut self.disk_file; // used just to save typing
         df.rewind().expect("Error could not rewind");
 
-
-
         // Tables are on page 1 in the cell content area. Let's grab those offsets the offset array
         //   is starts at 108 and goes to the number of tables (aka num cells on page 1)
         df.seek(SeekFrom::Start(108)).expect("Error could not seek to page 1, pos 108");
@@ -67,8 +65,7 @@ impl Db {
             cell_offsets.push(dat);
         }
         // Reverse the vec as it's in right to left order
-        cell_offsets.reverse();
-        println!("{:04x?}", cell_offsets);
+        println!("Cell Pointers - {:04x?}", cell_offsets);
 
         // Get the table data - We are doing this in idx 1 due to offset multiplying
         for cell_offset in cell_offsets {
@@ -77,27 +74,63 @@ impl Db {
 
             // First varint payload size in bytes including overflow
             let _ = df.read_sqlite_be_varint().expect("Error reading sqlvarint for cell payload size");
-            let _ = df.read_sqlite_be_varint().expect("Error reading sqlvarint for rowid");
+            let _ = df.read_sqlite_be_varint().expect("Error reading sqlvarint for row id");
             let total_bytes_in_header = df.read_sqlite_be_varint().expect("Error reading sqlvarint for total bytes in header");
 
             eprintln!("total bytes: {:?}", total_bytes_in_header);
             
-            let mut coldata: Vec<i64> = vec![];
-            // total bytes varint counts in the total so we need to take into account
-            for i in 0..(total_bytes_in_header.0 - total_bytes_in_header.1 as i64) {
-                let coltype = df.read_sqlite_be_varint().expect("error reading column data");
-                coldata.push(coltype.0);
-                    
+            let mut coldata: Vec<(i64, usize)> = vec![];
+
+            let mut i = total_bytes_in_header.1 as i64;
+            while i < total_bytes_in_header.0 {
+
+                let d = df.read_sqlite_be_varint().expect("Error reading sqlvarint for row id");
+
+                let sz = match d.0 {
+                    0 => 0,
+                    1 => 1,
+                    2 => 2,
+                    3 => 3,
+                    4 => 4,
+                    5 => 6,
+                    6 => 8,
+                    7 => 8,
+                    8 => 0,
+                    9 => 0,
+                    oval => {
+                        if oval == 10 || oval == 1 {
+                            panic!("Record serial type code is 10 or 11. Should not occur");
+                        }
+                        else {
+                            if oval >= 12 && oval % 2 == 0 {
+                                ( oval - 12 ) / 2
+                            } else if oval >= 13 && oval % 2 == 1 {
+                                ( oval - 13 ) / 2
+                            }
+                            else {
+                                panic!("Error reading record serial type code");
+                            }
+                        }
+                    }
+                };
+
+                coldata.push( (d.0, sz as usize) );
+                i = i + d.1 as i64;;
             }
 
-            //eprintln!("{:}")
+            print!("{:?}", coldata);
+
+            // Now lets grab the actual column data
+            for col in coldata {
+                
+            }
+                
+            }
 
 
             break;
 
         }
-
-
 
         TablesInfoResult {
 

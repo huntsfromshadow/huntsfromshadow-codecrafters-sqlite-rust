@@ -1,0 +1,4 @@
+* https://sqlite-internal.pages.dev/
+* https://link.springer.com/content/pdf/10.1007/978-3-030-98467-0_5.pdf
+* https://torymur.github.io/sqlite-repr/
+

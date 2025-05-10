@@ -1,11 +1,10 @@
-//! Structure and Logic for a Page in Memory. Used to load a page work with it and then let it
-//!   dealloc
-
+/*use std::cmp::PartialEq;
 use std::io::{Seek, SeekFrom};
 use byteorder::{BigEndian, ReadBytesExt};
 use crate::db_file::DbFile;
+use crate::util::ReadSQLiteBigEndianVarint;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialOrd, PartialEq)]
 pub enum BTreePageType {
     InteriorIndexPage,
     InteriorTablePage,
@@ -16,7 +15,7 @@ pub enum BTreePageType {
 
 /// This is a page in memory.  There is a boolean to let people know if this is a page zero
 ///   if this is false some variables will be left at default value (noted in the block)
-///   these pages are loaded Upon need (with exception of page 1)
+///   these pages are loaded Upon need (except page 1)
 #[derive(Debug, Copy, Clone)]
 pub struct MemPage {
     page_number: u64,
@@ -33,7 +32,11 @@ impl MemPage {
         Self {
             page_number: 0,
             loaded: false,
-            page_type: BTreePageType::UnknownPageType
+            page_type: BTreePageType::UnknownPageType,
+            first_freeblock_on_page_offset: 0,
+            number_of_cells_on_page: 0,
+            start_of_cell_content_area_offset: 0,
+            fragmented_free_bytes_in_cell_content_number: 0,
         }
     }
 
@@ -44,17 +47,20 @@ impl MemPage {
             page_type: BTreePageType::UnknownPageType,
             first_freeblock_on_page_offset: 0,
             number_of_cells_on_page: 0,
+            start_of_cell_content_area_offset: 0,
             fragmented_free_bytes_in_cell_content_number: 0,
         };
 
-        db.db_file.rewind().expect("Could not rewind db file");
+        let mut df = &db.db_file;
+
+        df.rewind().expect("Could not rewind db file");
 
         if(retval.page_number == 1) {
             // Page type may need a fast-forward if page 1
             // Normally our position function would handle this but lets avoid a seek on other pages if we could
-            db.db_file.seek(SeekFrom::Start(100)).expect("Could not sync to spot 100");
+            df.seek(SeekFrom::Start(100)).expect("Could not sync to spot 100");
         }
-        retval.page_type = match (db.db_file.read_u8().expect("Could not read u8 for page type")) {
+        retval.page_type = match (df.read_u8().expect("Could not read u8 for page type")) {
             0x05 => BTreePageType::InteriorTablePage,
             0x02 => BTreePageType::InteriorIndexPage,
             0x0a => BTreePageType::LeafIndexPage,
@@ -62,19 +68,29 @@ impl MemPage {
             _ => { panic!("Unknown page type") }
         };
 
-        retval.first_freeblock_on_page_offset = db.db_file.read_u16::<BigEndian>()
+        retval.first_freeblock_on_page_offset = df.read_u16::<BigEndian>()
             .expect(&format!("Could not read first start of freeblock for page {}", retval.page_number));
 
-        retval.number_of_cells_on_page = db.db_file.read_u16::<BigEndian>()
+        retval.number_of_cells_on_page = df.read_u16::<BigEndian>()
             .expect(&format!("Could not read number of cells for page {}", retval.page_number));
 
-        retval.start_of_cell_content_area_offset =  db.db_file.read_u16::<BigEndian>()
+        retval.start_of_cell_content_area_offset =  df.read_u16::<BigEndian>()
             .expect(&format!("Could not read start of cell content area {}", retval.page_number));
 
-        retval.fragmented_free_bytes_in_cell_content_number =  db.db_file.read_u8()
+        retval.fragmented_free_bytes_in_cell_content_number =  df.read_u8()
             .expect(&format!("Could not number of fragmented free bytes in content {}", retval.page_number));
 
-        if retval.page_type ==BTreePageType::
+        if retval.page_type != BTreePageType::LeafTablePage {
+            panic!("Unexpected page type - mem-page.rs");
+        }
+
+        let mut cell_pointers: Vec<u16> = vec![];
+        for x in 0..retval.number_of_cells_on_page {
+            let cp = df.read_u16::<BigEndian>().expect("Error reading cell pointer");
+            cell_pointers.push(cp);
+        }
+
+        println!("cell pointers: {:?}", cell_pointers);
 
         /*    page_zero.database_page_size = crate::util::read_u16(&mut file);
 
@@ -97,4 +113,4 @@ impl MemPage {
 
         retval
     }
-}
+}*/
