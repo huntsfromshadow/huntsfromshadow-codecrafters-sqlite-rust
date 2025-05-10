@@ -83,9 +83,7 @@ impl Db {
 
             let mut i = total_bytes_in_header.1 as i64;
             while i < total_bytes_in_header.0 {
-
                 let d = df.read_sqlite_be_varint().expect("Error reading sqlvarint for row id");
-
                 let sz = match d.0 {
                     0 => 0,
                     1 => 1,
@@ -113,19 +111,17 @@ impl Db {
                         }
                     }
                 };
-
                 coldata.push( (d.0, sz as usize) );
                 i = i + d.1 as i64;;
             }
-
             print!("{:?}", coldata);
 
             // Now lets grab the actual column data
             for col in coldata {
                 
             }
-                
-            }
+
+            
 
 
             break;
