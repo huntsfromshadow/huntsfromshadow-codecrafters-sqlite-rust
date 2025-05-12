@@ -8,17 +8,26 @@ use crate::db::Db;
 fn main() -> Result<()> {
     // Parse arguments
     let args = std::env::args().collect::<Vec<_>>();
-    match args.len() {
-        0 | 1 => bail!("Missing <database path> and <command>"),
-        2 => bail!("Missing <command>"),
-        _ => {}
+
+    let command: String;
+    let fname: String;
+    if args.len() == 1 && args[0] == "target/debug/codecrafters-sqlite" {
+        // Set up the variables so we can debug the current test
+        command = "SELECT COUNT(*) FROM apples".to_string();
+        fname = "sample.db".to_string();
+    } else {
+        match args.len() {
+            0 | 1 => bail!("Missing <database path> and <command>"),
+            2 => bail!("Missing <command>"),
+            _ => {}
+        }
+
+        // Parse command and act accordingly
+        //let command = &args[2];
+        command = args[2].to_string();
+        fname = args[1].to_string();
     }
 
-    // Parse command and act accordingly
-    //let command = &args[2];
-    let command = &args[2];
-    let fname = &args[1];
-    
     let mut db = Db::new_with_file(fname.clone());
 
     match command.as_str() {

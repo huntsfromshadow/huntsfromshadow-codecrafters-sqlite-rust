@@ -1,4 +1,4 @@
-macro_rules! format_binary_spaced {
+/*macro_rules! format_binary_spaced {
     ($num:expr) => {
         {
             let num_value = $num;
@@ -14,7 +14,7 @@ macro_rules! format_binary_spaced {
             formatted_binary
         }
     };
-}
+}*/
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum VarintError {
@@ -47,20 +47,20 @@ pub fn process_sqlite_varint(data: Vec<u8>) -> Result<(i64, usize), VarintError>
 
             if (byte & 0x80) == 0 {
                 // MSB is 0, so this is the last byte of the varint.
-                return Ok((result as i64, bytes_read));
+                return Ok((result, bytes_read));
             }
             // MSB is 1, continue to the next byte.
         } else {
             // This is the 9th byte. It uses all 7 bits for payload,
             // as the MSB of the 9th byte for a valid i64 range will be 0.
             // note if msb is 1 it's bad data
-            if(byte >= 0x80) {
+            if byte >= 0x80 {
                 return Err(VarintError::IncompleteVarint)
             }
             
             let payload = byte & 0x7F;
             result = (result << 7) | (payload as i64);
-            return Ok((result as i64, bytes_read));
+            return Ok((result, bytes_read));
         }
     }
 
@@ -75,7 +75,6 @@ pub fn process_sqlite_varint(data: Vec<u8>) -> Result<(i64, usize), VarintError>
 
 #[cfg(test)]
 mod tests {
-    use itertools::assert_equal;
     use crate::sqlite_varint_processing::{process_sqlite_varint, VarintError};
 
     // Single Bytes self-contained list
