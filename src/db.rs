@@ -1,6 +1,8 @@
+use std::cmp::PartialEq;
 use std::fs::File;
-use std::io::{Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 use byteorder::{BigEndian, ReadBytesExt};
+use itertools::Itertools;
 use crate::util::ReadSQLiteBigEndianVarint;
 
 /// DB File Given the nature of the way this works only using structs to pass data not to isolate down
@@ -19,6 +21,25 @@ pub struct Db {
     disk_file_path: String,
     disk_file: File
 }
+
+#[derive(Debug, PartialOrd, PartialEq)]
+pub enum ColumnType {
+    Null,
+    EightBitInteger,
+    SixteenBitInteger,
+    TwentyFourBitInteger,
+    ThirtyTwoBitInteger,
+    FortyEightBitInteger,
+    SixtyFourBitInteger,
+    Ieee64BitInteger,
+    SchemaFour0,
+    SchemaFour1,
+    ReservedInternal,
+    Blob(usize),
+    String(usize),
+    Error,
+}
+
 
 impl Db {
     pub fn new_with_file(path: String) -> Self {
@@ -79,44 +100,51 @@ impl Db {
 
             eprintln!("total bytes: {:?}", total_bytes_in_header);
             
-            let mut coldata: Vec<(i64, usize)> = vec![];
+            let mut colheaders: Vec<ColumnType> = vec![];
 
             let mut i = total_bytes_in_header.1 as i64;
             while i < total_bytes_in_header.0 {
                 let d = df.read_sqlite_be_varint().expect("Error reading sqlvarint for row id");
-                let sz = match d.0 {
-                    0 => 0,
-                    1 => 1,
-                    2 => 2,
-                    3 => 3,
-                    4 => 4,
-                    5 => 6,
-                    6 => 8,
-                    7 => 8,
-                    8 => 0,
-                    9 => 0,
-                    oval => {
-                        if oval == 10 || oval == 1 {
-                            panic!("Record serial type code is 10 or 11. Should not occur");
-                        }
-                        else {
-                            if oval >= 12 && oval % 2 == 0 {
-                                ( oval - 12 ) / 2
-                            } else if oval >= 13 && oval % 2 == 1 {
-                                ( oval - 13 ) / 2
-                            }
-                            else {
-                                panic!("Error reading record serial type code");
-                            }
-                        }
-                    }
-                };
-                coldata.push( (d.0, sz as usize) );
+                colheaders.push(match d.0 {
+                    0 => ColumnType::Null,
+                    1 => ColumnType::EightBitInteger,
+                    2 => ColumnType::SixteenBitInteger,
+                    3 => ColumnType::TwentyFourBitInteger,
+                    4 => ColumnType::ThirtyTwoBitInteger,
+                    5 => ColumnType::FortyEightBitInteger,
+                    6 => ColumnType::SixtyFourBitInteger,
+                    7 => ColumnType::Ieee64BitInteger,
+                    8 => ColumnType::SchemaFour0,
+                    9 => ColumnType::SchemaFour1,
+                    10 | 11 => ColumnType::ReservedInternal,
+                    val if val >= 12 && val % 2 == 0 => ColumnType::Blob((val as usize - 12) / 2),
+                    val if val >= 23 && val % 2 == 1 => ColumnType::String((val as usize - 13) / 2),
+                    _ => ColumnType::Error
+                });
                 i = i + d.1 as i64;;
             }
-            print!("{:?}", coldata);
+            print!("{:?}", colheaders);
 
+            let mut coldata:Vec<(ColumnType, Vec<u8>)> = vec![];
             // Now lets grab the actual column data
+            for col in colheaders {
+                match col {
+                    ColumnType::EightBitInteger => {
+                        let d = df.read_u8().expect("Error reading u8 for EightBitInteger");
+                        coldata.push((ColumnType::EightBitInteger, vec![d]));
+                    }
+                    ColumnType::String(val) => {
+                        let mut buf = vec![0u8; val];
+                        df.read_exact(&mut buf).unwrap();
+                        coldata.push((ColumnType::String(val),buf));
+                    }
+                    _ => panic!("Have not implemented column parser")
+                }
+            }
+            
+            println!("Column data: {:?}", coldata);
+            
+            // Read out data
             for col in coldata {
                 
             }
