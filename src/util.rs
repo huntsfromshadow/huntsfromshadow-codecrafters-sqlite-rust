@@ -8,13 +8,13 @@ pub trait ReadSQLiteBigEndianVarint {
 }
 
 impl ReadSQLiteBigEndianVarint for File {
-    fn read_sqlite_be_varint(&mut self) -> Result<(i64, usize), std::io::Error> {
+    fn read_sqlite_be_varint(&mut self) -> Result<(i64, usize), io::Error> {
         let mut data: Vec<u8> = vec![];
         loop {
             let d = self.read_u8()?;
             data.push(d);
 
-            if (d < 0x80) {
+            if d < 0x80 {
                 break;
             }
         }
@@ -22,7 +22,7 @@ impl ReadSQLiteBigEndianVarint for File {
         let res = process_sqlite_varint(data);
         match res {
             Ok((val1, val2)) => Ok((val1, val2)),
-            Err(e) => Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid Varint data")),
+            Err(_) => Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid Varint data")),
         }
     }
 }

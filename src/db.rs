@@ -2,7 +2,6 @@ use std::cmp::PartialEq;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use byteorder::{BigEndian, ReadBytesExt};
-use itertools::Itertools;
 use crate::util::ReadSQLiteBigEndianVarint;
 
 /// DB File Given the nature of the way this works only using structs to pass data not to isolate down
@@ -14,11 +13,11 @@ pub struct DbInfoResult {
 }
 
 pub struct TablesInfoResult {
-
+    pub table_names: Vec<String>,
 }
 
 pub struct Db {
-    disk_file_path: String,
+    //disk_file_path: String,
     disk_file: File
 }
 
@@ -44,7 +43,7 @@ pub enum ColumnType {
 impl Db {
     pub fn new_with_file(path: String) -> Self {
         Self {
-            disk_file_path: path.clone(),
+            //disk_file_path: path.clone(),
             disk_file: File::open(path).expect("Could not open database file"),
         }
     }
@@ -72,7 +71,7 @@ impl Db {
         // Okay first thing we really need is the various sizes
         let dbinfo = self.cmd_get_db_info();
 
-        let mut df = &mut self.disk_file; // used just to save typing
+        let df = &mut self.disk_file; // used just to save typing
         df.rewind().expect("Error could not rewind");
 
         // Tables are on page 1 in the cell content area. Let's grab those offsets the offset array
@@ -87,6 +86,8 @@ impl Db {
         }
         // Reverse the vec as it's in right to left order
         println!("Cell Pointers - {:04x?}", cell_offsets);
+
+        let mut table_names: Vec<String> = vec![];
 
         // Get the table data - We are doing this in idx 1 due to offset multiplying
         for cell_offset in cell_offsets {
@@ -121,7 +122,7 @@ impl Db {
                     val if val >= 23 && val % 2 == 1 => ColumnType::String((val as usize - 13) / 2),
                     _ => ColumnType::Error
                 });
-                i = i + d.1 as i64;;
+                i = i + d.1 as i64;
             }
             print!("{:?}", colheaders);
 
@@ -145,19 +146,31 @@ impl Db {
             println!("Column data: {:?}", coldata);
             
             // Read out data
+            let mut cnt = 0;
             for col in coldata {
-                
+                match col.0 {
+                    ColumnType::EightBitInteger => {
+                        let x = col.1.first().expect("Error reading u8 for EightBitInteger").clone() as i8;
+                        eprintln!("{:?} -- {}", col.0, x);
+                    }
+                    ColumnType::String(_) => {
+                        let end_str = String::from_utf8(col.1).expect("Error reading String");
+                        eprintln!("{:?} -- {:?}", col.0, end_str);
+
+                        if cnt == 2 {
+                            table_names.push(end_str);
+                        }
+                    }
+                    _ => panic!("Have not implemented column parser")
+                }
+                cnt = cnt + 1;
             }
-
-            
-
-
-            break;
-
         }
 
-        TablesInfoResult {
+        eprintln!("{:?}", table_names);
 
+        TablesInfoResult {
+            table_names: table_names.clone()
         }
     }
 }
