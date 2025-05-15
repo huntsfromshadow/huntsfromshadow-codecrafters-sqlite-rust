@@ -1,6 +1,7 @@
 use std::cmp::PartialEq;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom};
+use std::ptr::null;
 use byteorder::{BigEndian, ReadBytesExt};
 use crate::util::ReadSQLiteBigEndianVarint;
 
@@ -18,7 +19,8 @@ pub struct TablesInfoResult {
 
 pub struct Db {
     //disk_file_path: String,
-    disk_file: File
+    disk_file: Option<File>,
+    page_locs: Vec<u64>
 }
 
 #[derive(Debug, PartialOrd, PartialEq)]
@@ -41,12 +43,38 @@ pub enum ColumnType {
 
 
 impl Db {
+    pub fn new() -> Self {
+        Self {
+            disk_file: None,
+            page_locs: vec![]
+        }
+    }
     pub fn new_with_file(path: String) -> Self {
         Self {
             //disk_file_path: path.clone(),
-            disk_file: File::open(path).expect("Could not open database file"),
+            disk_file: Some(File::open(path).expect("Could not open database file")),
+            page_locs: vec![]
         }
     }
+    
+    pub fn locate_pages(&mut self) {
+        if(self.disk_file.is_none()) {
+            panic!("Disk File is empty. No DB Possible")
+        }
+        
+        let mut df: &File = self.disk_file.as_ref().unwrap();
+        df.rewind().expect("Could not rewind db file");
+        
+        
+        
+        
+        
+        
+    }
+    
+    
+    
+    
 
     pub fn cmd_get_db_info(&mut self) -> DbInfoResult {
 

@@ -1,6 +1,7 @@
 mod util;
 mod db;
 mod sqlite_varint_processing;
+mod db_interface;
 
 use anyhow::{bail, Result};
 use crate::db::Db;
@@ -39,6 +40,9 @@ fn main() -> Result<()> {
         ".tables" => {
             let dat = db.cmd_get_tables_info();
             println!("{:?}", dat.table_names);
+        }
+        "SELECT COUNT(*) FROM apples" => {
+            // For now lets just manually do the query. Then we can abstract from that.
         }
         _ => bail!("Missing or invalid command passed: {}", command),
     }
