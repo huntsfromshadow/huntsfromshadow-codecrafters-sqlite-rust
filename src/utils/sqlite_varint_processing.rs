@@ -75,7 +75,7 @@ pub fn process_sqlite_varint(data: Vec<u8>) -> Result<(i64, usize), VarintError>
 
 #[cfg(test)]
 mod tests {
-    use crate::sqlite_varint_processing::{process_sqlite_varint, VarintError};
+    use crate::utils::sqlite_varint_processing::{process_sqlite_varint, VarintError};
 
     // Single Bytes self-contained list
     #[test]

@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io;
 use byteorder::ReadBytesExt;
-use crate::sqlite_varint_processing::process_sqlite_varint;
+use crate::utils::sqlite_varint_processing::process_sqlite_varint;
 
 pub trait ReadSQLiteBigEndianVarint {
     fn read_sqlite_be_varint(&mut self) -> io::Result<(i64, usize)>;

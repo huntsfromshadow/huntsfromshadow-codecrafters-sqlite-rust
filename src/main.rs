@@ -1,10 +1,8 @@
-mod util;
 mod db;
-mod sqlite_varint_processing;
-mod db_interface;
+mod utils;
 
 use anyhow::{bail, Result};
-use crate::db::Db;
+use crate::db::db_interface::DbInterface;
 
 fn main() -> Result<()> {
     // Parse arguments
@@ -29,17 +27,17 @@ fn main() -> Result<()> {
         fname = args[1].to_string();
     }
 
-    let mut db = Db::new_with_file(fname.clone());
+    let _db_interface = DbInterface::open_db(fname);
 
     match command.as_str() {
         ".dbinfo" => {
-            let dbinfo = db.cmd_get_db_info();
+            /*let dbinfo = db.cmd_get_db_info();
             println!("number of tables: {}", dbinfo.number_of_tables);
-            println!("database page size: {}", dbinfo.database_page_size);
+            println!("database page size: {}", dbinfo.database_page_size);*/
         }
         ".tables" => {
-            let dat = db.cmd_get_tables_info();
-            println!("{:?}", dat.table_names);
+            /*let dat = db.cmd_get_tables_info();
+            println!("{:?}", dat.table_names);*/
         }
         "SELECT COUNT(*) FROM apples" => {
             // For now lets just manually do the query. Then we can abstract from that.
